@@ -88,3 +88,47 @@ class PedidoFisico extends Pedido {
 class PedidoDigital extends Pedido {
   // Não herda nem simula calcularFrete — contrato honrado.
 }
+// ─────────────────────────────────────────────────────────────
+// 4. ISP — Interface Segregation Principle
+//    Antes: ITarefasPedido forçava PedidoDigital a implementar
+//           imprimirEtiquetaFisica() lançando erro.
+//    Depois: três interfaces coesas; cada classe implementa
+//            apenas o que faz sentido para ela.
+// ─────────────────────────────────────────────────────────────
+ 
+interface IProcessaPagamento {
+  processarPagamento(): void;
+}
+ 
+interface IGeraNotaFiscal {
+  gerarNotaFiscal(): void;
+}
+ 
+interface IImprimeEtiqueta {
+  imprimirEtiquetaFisica(): void;
+}
+ 
+class ServicoPedidoDigital implements IProcessaPagamento, IGeraNotaFiscal {
+  processarPagamento(): void {
+    console.log("Pagamento digital processado.");
+  }
+  gerarNotaFiscal(): void {
+    console.log("Nota fiscal digital gerada.");
+  }
+  // Sem imprimirEtiquetaFisica — nenhum erro lançado, nenhum contrato quebrado.
+}
+ 
+class ServicoPedidoFisico
+  implements IProcessaPagamento, IGeraNotaFiscal, IImprimeEtiqueta
+{
+  processarPagamento(): void {
+    console.log("Pagamento processado.");
+  }
+  gerarNotaFiscal(): void {
+    console.log("Nota fiscal física gerada.");
+  }
+  imprimirEtiquetaFisica(): void {
+    console.log("Etiqueta física impressa.");
+  }
+}
+ 
