@@ -1,71 +1,66 @@
-class SistemaCobrancaStripe {
-    cobrar(usuarioId: string, valorTokens: number): void {
-        console.log(`Cobrando R$${valorTokens} via Stripe do usuário ${usuarioId}`);
+// 1. Classe de Banco de Dados Concreta
+class BancoDeDadosMySQL {
+    salvar(dados: any): void {
+        console.log("Salvando dados no MySQL...");
     }
 }
 
-// 2. Interface "Faz-Tudo"
-interface IModelosIA {
-    gerarTexto(prompt: string): string;
-    gerarImagem(prompt: string): string;
-    gerarAudio(prompt: string): string;
+// 2. Interface de tarefas do pedido
+interface ITarefasPedido {
+    processarPagamento(): void;
+    gerarNotaFiscal(): void;
+    imprimirEtiquetaFisica(): void;
 }
 
-// 3. A classe principal que gerencia tudo
-class AssistenteOmniIA implements IModelosIA {
-    public nomeModelo: string;
+// 3. Classe principal de Pedido
+class Pedido {
+    public valorTotal: number;
+    public tipoCliente: string;
 
-    constructor(nomeModelo: string) {
-        this.nomeModelo = nomeModelo;
+    constructor(valorTotal: number, tipoCliente: string) {
+        this.valorTotal = valorTotal;
+        this.tipoCliente = tipoCliente;
     }
 
-    // Processador central cheio de condicionais
-    processarRequisicaoUsuario(prompt: string, tipo: string): void {
-        console.log(`Iniciando processamento com ${this.nomeModelo}...`);
-
-        if (tipo === "TEXTO") {
-            this.gerarTexto(prompt);
-        } else if (tipo === "IMAGEM") {
-            this.gerarImagem(prompt);
-        } else if (tipo === "AUDIO") {
-            this.gerarAudio(prompt);
-        } else {
-            throw new Error("Tipo de IA não suportado pelo sistema.");
+    calcularDesconto(): number {
+        if (this.tipoCliente === "VIP") {
+            return this.valorTotal * 0.20;
+        } else if (this.tipoCliente === "ESTUDANTE") {
+            return this.valorTotal * 0.10;
         }
-       
-        // Finaliza cobrando o usuário direto aqui
-        this.registrarCobranca(1.50);
+        return 0;
     }
 
-    gerarTexto(prompt: string): string {
-        return `[Texto Gerado]: Respondendo ao prompt: ${prompt}`;
+    calcularFrete(): number {
+        return 15.0;
     }
 
-    gerarImagem(prompt: string): string {
-        return `[Imagem Gerada]: URL da imagem baseada em: ${prompt}`;
+    salvarPedido(): void {
+        const db = new BancoDeDadosMySQL();
+        db.salvar(this);
     }
 
-    gerarAudio(prompt: string): string {
-        return `[Áudio Gerado]: Arquivo de voz para: ${prompt}`;
-    }
-
-    registrarCobranca(valor: number): void {
-        const stripe = new SistemaCobrancaStripe();
-        stripe.cobrar("user_999", valor);
+    enviarEmailConfirmacao(): void {
+        console.log("Enviando e-mail de confirmação para o cliente...");
     }
 }
 
-// 4. Um modelo específico sendo forçado a herdar o que não deve
-class ModeloFocadoEmTexto extends AssistenteOmniIA {
-    constructor() {
-        super("ChatGPT-4");
+// 4. Implementação para produtos digitais
+class PedidoProdutoDigital extends Pedido implements ITarefasPedido {
+   
+    calcularFrete(): number {
+        throw new Error("Erro: Produtos digitais não possuem frete.");
     }
 
-    gerarImagem(prompt: string): string {
-        throw new Error("Falha Crítica: O ChatGPT-4 não gera imagens nativamente nesta versão.");
+    processarPagamento(): void {
+        console.log("Pagamento processado online.");
     }
 
-    gerarAudio(prompt: string): string {
-        throw new Error("Falha Crítica: Modelo de texto não pode gerar arquivos de áudio.");
+    gerarNotaFiscal(): void {
+        console.log("Nota fiscal digital gerada.");
+    }
+
+    imprimirEtiquetaFisica(): void {
+        throw new Error("Erro: Não é possível imprimir etiqueta para produto digital.");
     }
 }
