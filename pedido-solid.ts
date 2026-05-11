@@ -132,3 +132,82 @@ class ServicoPedidoFisico
   }
 }
  
+// ─────────────────────────────────────────────────────────────
+// 5. DIP — Dependency Inversion Principle
+//    Antes: salvarPedido() instanciava BancoDeDadosMySQL
+//           diretamente, tornando testes e trocas impossíveis.
+//    Depois: ProcessadorPedido depende de IRepositorioPedido
+//            (abstração); a implementação concreta é injetada
+//            pelo chamador (Injeção de Dependência).
+// ─────────────────────────────────────────────────────────────
+ 
+interface IRepositorioPedido {
+  salvar(pedido: Pedido): void;
+}
+ 
+class RepositorioMySQL implements IRepositorioPedido {
+  salvar(pedido: Pedido): void {
+    console.log(`[MySQL] Salvando pedido de R$ ${pedido.valorTotal}...`);
+  }
+}
+ 
+class RepositorioMongoDB implements IRepositorioPedido {
+  salvar(pedido: Pedido): void {
+    console.log(`[MongoDB] Salvando pedido de R$ ${pedido.valorTotal}...`);
+  }
+}
+ 
+/** Repositório em memória — ideal para testes unitários. */
+class RepositorioEmMemoria implements IRepositorioPedido {
+  public pedidosSalvos: Pedido[] = [];
+  salvar(pedido: Pedido): void {
+    this.pedidosSalvos.push(pedido);
+    console.log(`[Memória] Pedido armazenado.`);
+  }
+}
+ 
+// ─────────────────────────────────────────────────────────────
+// Orquestrador — compõe as dependências (sem violar nenhum
+// princípio: depende de abstrações, tem responsabilidade única).
+// ─────────────────────────────────────────────────────────────
+ 
+class ProcessadorPedido {
+  constructor(
+    private readonly repositorio: IRepositorioPedido,
+    private readonly email: ServicoEmail
+  ) {}
+ 
+  processar(pedido: Pedido): void {
+    const calculador = obterCalculadorDesconto(pedido.tipoCliente);
+    const desconto = calculador.calcular(pedido.valorTotal);
+    console.log(`Desconto aplicado: R$ ${desconto.toFixed(2)}`);
+ 
+    this.repositorio.salvar(pedido);
+    this.email.enviarConfirmacao(pedido);
+  }
+}
+ 
+// ─────────────────────────────────────────────────────────────
+// Exemplo de uso
+// ─────────────────────────────────────────────────────────────
+ 
+const repositorio = new RepositorioMySQL();
+const email = new ServicoEmail();
+const processador = new ProcessadorPedido(repositorio, email);
+ 
+const pedidoVIP = new PedidoFisico(500, "VIP");
+processador.processar(pedidoVIP);
+console.log(`Frete: R$ ${pedidoVIP.calcularFrete().toFixed(2)}`);
+ 
+const pedidoDigital = new PedidoDigital(120, "ESTUDANTE");
+processador.processar(pedidoDigital);
+ 
+const servicoDigital = new ServicoPedidoDigital();
+servicoDigital.processarPagamento();
+servicoDigital.gerarNotaFiscal();
+ 
+// Trocar banco sem alterar ProcessadorPedido:
+const repositorioTeste = new RepositorioEmMemoria();
+const processadorTeste = new ProcessadorPedido(repositorioTeste, email);
+processadorTeste.processar(new PedidoDigital(80, "PREMIUM"));
+console.log("Pedidos em memória:", repositorioTeste.pedidosSalvos.length);
