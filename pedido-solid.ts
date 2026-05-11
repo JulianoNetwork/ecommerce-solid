@@ -70,3 +70,21 @@ function obterCalculadorDesconto(tipoCliente: string): ICalculadorDesconto {
   return mapa[tipoCliente] ?? new SemDesconto();
 }
  
+// ─────────────────────────────────────────────────────────────
+// 3. LSP — Liskov Substitution Principle
+//    Antes: PedidoProdutoDigital estendia Pedido e lançava
+//           exceção em calcularFrete(), quebrando contratos.
+//    Depois: calcularFrete() foi removido da classe base.
+//            PedidoFisico carrega essa responsabilidade; o digital
+//            nunca promete o que não pode cumprir.
+// ─────────────────────────────────────────────────────────────
+ 
+class PedidoFisico extends Pedido {
+  calcularFrete(): number {
+    return 15.0;
+  }
+}
+ 
+class PedidoDigital extends Pedido {
+  // Não herda nem simula calcularFrete — contrato honrado.
+}
