@@ -22,3 +22,51 @@ class ServicoEmail {
     console.log(`Enviando e-mail de confirmação para pedido de R$ ${pedido.valorTotal}...`);
   }
 }
+// ─────────────────────────────────────────────────────────────
+// 2. OCP — Open/Closed Principle
+//    Antes: calcularDesconto() usava if/else e exigia modificação
+//           a cada novo tipo de cliente.
+//    Depois: cada estratégia de desconto é uma implementação
+//            independente; adicionar "PREMIUM" não toca no código
+//            existente.
+// ─────────────────────────────────────────────────────────────
+ 
+interface ICalculadorDesconto {
+  calcular(valorTotal: number): number;
+}
+ 
+class DescontoVIP implements ICalculadorDesconto {
+  calcular(valorTotal: number): number {
+    return valorTotal * 0.20;
+  }
+}
+ 
+class DescontoEstudante implements ICalculadorDesconto {
+  calcular(valorTotal: number): number {
+    return valorTotal * 0.10;
+  }
+}
+ 
+/** Novo tipo de cliente adicionado sem modificar classes existentes. */
+class DescontoPremium implements ICalculadorDesconto {
+  calcular(valorTotal: number): number {
+    return valorTotal * 0.15;
+  }
+}
+ 
+class SemDesconto implements ICalculadorDesconto {
+  calcular(_valorTotal: number): number {
+    return 0;
+  }
+}
+ 
+/** Fábrica que mapeia o tipo de cliente para a estratégia correta. */
+function obterCalculadorDesconto(tipoCliente: string): ICalculadorDesconto {
+  const mapa: Record<string, ICalculadorDesconto> = {
+    VIP: new DescontoVIP(),
+    ESTUDANTE: new DescontoEstudante(),
+    PREMIUM: new DescontoPremium(),
+  };
+  return mapa[tipoCliente] ?? new SemDesconto();
+}
+ 
